@@ -9,6 +9,7 @@ st.set_page_config(page_title="박종훈의 달러 지표", layout="centered")
 @st.cache_data(ttl=86400)
 def get_data():
     ticker = "USDKRW=X"
+    # 최근 3년 데이터 호출
     data = yf.download(ticker, start=datetime.now() - timedelta(days=1095))
     curr = round(float(data['Close'].iloc[-1]), 2)
     avg = round(float(data['Close'].mean()), 2)
@@ -17,37 +18,41 @@ def get_data():
 
 curr, avg, limit = get_data()
 
-# 2. 게이지 디자인 (3색 구간 복구)
+# 2. 게이지 디자인 (수치 텍스트 직접 삽입)
 fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = curr,
     number = {'suffix': "원", 'font': {'size': 50, 'color': '#2C3E50', 'family': 'Arial Black'}},
     gauge = {
-        'axis': {'range': [avg*0.8, avg*1.2], 'tickwidth': 1},
+        'axis': {'range': [avg*0.8, avg*1.2], 'tickwidth': 1, 'tickcolor': "#444"},
         'bar': {'color': "#2C3E50", 'thickness': 0.25},
         'steps': [
-            {'range': [0, avg], 'color': "#00E676"},   # 초록: 적극 매수
-            {'range': [avg, limit], 'color': "#FFD600"}, # 노랑: 분할/적립 매수
-            {'range': [limit, 2000], 'color': "#FF5252"}], # 빨강: 매수 금지
+            {'range': [0, avg], 'color': "#00E676"},   # 적극 매수 (초록)
+            {'range': [avg, limit], 'color': "#FFD600"}, # 분할 매수 (노랑)
+            {'range': [limit, 2000], 'color': "#FF5252"}], # 매수 금지 (빨강)
         'threshold': {
-            'line': {'color': "black", 'width': 5},
+            'line': {'color': "black", 'width': 6},
             'thickness': 0.8,
             'value': avg}
     }
 ))
 
+# 형님이 요청하신 '현재가'와 '평균가' 텍스트 주석 추가
+fig.add_annotation(x=0.5, y=0.15, text=f"현재 가격: <b>{curr:,}원</b>", showarrow=False, font=dict(size=18, color="#2C3E50"))
+fig.add_annotation(x=0.25, y=0.55, text=f"3년 평균<br><b>{avg:,}원</b>", showarrow=False, font=dict(size=14, color="green"))
+fig.add_annotation(x=0.75, y=0.55, text=f"매수 한계<br><b>{limit:,}원</b>", showarrow=False, font=dict(size=14, color="red"))
+
 fig.update_layout(
     title = {'text': "<b>실시간 달러 투자 지표 (박종훈 원칙)</b>", 'x': 0.5, 'y': 0.9, 'xanchor': 'center', 'font': {'size': 22}},
-    height=400, margin=dict(l=40, r=40, t=100, b=20),
+    height=480, margin=dict(l=50, r=50, t=100, b=50),
     paper_bgcolor = "rgba(0,0,0,0)",
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 3. 구간별 상세 의미 설명 (형님이 요청하신 부분)
+# 3. 구간별 가이드 및 박종훈 조언 (이미지 a53b34 참고하여 유지)
 st.markdown("### 📊 구간별 투자 가이드")
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.markdown(f"**🟢 적극 매수**\n\n({avg:,}원 이하)\n\n가장 안전한 구간입니다. 기계적으로 비중을 늘리세요.")
 with col2:
@@ -57,7 +62,6 @@ with col3:
 
 st.markdown("---")
 
-# 4. 박종훈 기자님의 최종 조언
 if curr < avg:
     st.success(f"### ✅ 지금은 '적극 매수' 구간입니다\n**박종훈 기자의 조언:** \"환율이 평균인 {avg:,}원 아래일 때가 가장 안전합니다. 공포를 이기고 달러 비중을 높이세요.\"")
 elif curr < limit:
