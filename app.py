@@ -18,7 +18,7 @@ def get_data():
 
 curr, avg, limit = get_data()
 
-# 2. 게이지 디자인 (수치 텍스트 직접 삽입)
+# 2. 게이지 디자인 (수치 텍스트 위치 정밀 조정)
 fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = curr,
@@ -37,20 +37,22 @@ fig = go.Figure(go.Indicator(
     }
 ))
 
-# 형님이 요청하신 '현재가'와 '평균가' 텍스트 주석 추가
-fig.add_annotation(x=0.5, y=0.15, text=f"현재 가격: <b>{curr:,}원</b>", showarrow=False, font=dict(size=18, color="#2C3E50"))
-fig.add_annotation(x=0.25, y=0.55, text=f"3년 평균<br><b>{avg:,}원</b>", showarrow=False, font=dict(size=14, color="green"))
-fig.add_annotation(x=0.75, y=0.55, text=f"매수 한계<br><b>{limit:,}원</b>", showarrow=False, font=dict(size=14, color="red"))
+# 텍스트 주석 위치 재조정 (겹침 방지)
+# 현재 가격 텍스트를 숫자 바로 위가 아닌, 더 아래쪽 여백으로 내렸습니다.
+fig.add_annotation(x=0.5, y=-0.05, text=f"실시간 현재가: <b>{curr:,}원</b>", showarrow=False, font=dict(size=18, color="#2C3E50"))
+fig.add_annotation(x=0.25, y=0.5, text=f"3년 평균<br><b>{avg:,}원</b>", showarrow=False, font=dict(size=14, color="green"))
+fig.add_annotation(x=0.75, y=0.5, text=f"매수 한계<br><b>{limit:,}원</b>", showarrow=False, font=dict(size=14, color="red"))
 
 fig.update_layout(
-    title = {'text': "<b>실시간 달러 투자 지표 (박종훈 원칙)</b>", 'x': 0.5, 'y': 0.9, 'xanchor': 'center', 'font': {'size': 22}},
-    height=480, margin=dict(l=50, r=50, t=100, b=50),
+    title = {'text': "<b>실시간 달러 투자 지표 (박종훈 원칙)</b>", 'x': 0.5, 'y': 0.95, 'xanchor': 'center', 'font': {'size': 22}},
+    height=500, # 높이를 충분히 확보하여 아래쪽 텍스트 공간 마련
+    margin=dict(l=50, r=50, t=100, b=80), # 아래쪽(b) 여백을 늘려 현재가 표시 공간 확보
     paper_bgcolor = "rgba(0,0,0,0)",
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 3. 구간별 가이드 및 박종훈 조언 (이미지 a53b34 참고하여 유지)
+# 3. 구간별 투자 가이드 (디자인 유지)
 st.markdown("### 📊 구간별 투자 가이드")
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -62,6 +64,7 @@ with col3:
 
 st.markdown("---")
 
+# 4. 박종훈 기자 조언
 if curr < avg:
     st.success(f"### ✅ 지금은 '적극 매수' 구간입니다\n**박종훈 기자의 조언:** \"환율이 평균인 {avg:,}원 아래일 때가 가장 안전합니다. 공포를 이기고 달러 비중을 높이세요.\"")
 elif curr < limit:
